@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload File to Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"
+    ></script>
+    <script src="./index.js"></script></head
+  ><style>
+    /* Body styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+      margin: 0;
+    }
+
+    /* Container styles */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading styles */
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* Form styles */
+    .form-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-file {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .file-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 40px;
+      background-color: #3498db;
+      color: #fff;
+      font-size: 24px;
+      line-height: 40px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .file-text {
+      margin-left: 50px;
+    }
+
+    /* Button styles */
+    .button {
+      background-color: #3498db;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    /* Progress bar styles */
+    .progress-bar {
+      background-color: #f1f1f1;
+      height: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      background-color: #3498db;
+      height: 100%;
+      width: 0;
+      transition: width 0.3s ease-in-out;
+    }
+
+    /* Upload percentage styles */
+    .upload-percentage {
+      font-size: 14px;
+      text-align: right;
+      margin-bottom: 10px;
+    }
+
+    /* Table container styles */
+    #table-container {
+      margin-top: 20px;
+    }
+
+    /*table desgin*/
+    .excel-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .excel-table th,
+    .excel-table td {
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .excel-table th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    .excel-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .excel-table tr:hover {
+      background-color: #e2e2e2;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <h1>Upload File to Firebase</h1>
+      <div class="form-group">
+        <input
+          type="file"
+          id="inputFile"
+          class="input-file"
+          onchange="getfile(event)"
+        />
+        <label for="inputFile" class="file-label">+</label>
+        <span class="file-text"></span>
+      </div>
+      <br />
+      <button type="submit" class="button" onclick="uploadFile()">
+        Upload File
+      </button>
+      <br />
+      <br />
+
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-bar-fill"></div>
+      </div>
+
+      <div class="upload-percentage">
+        <p id="upload-percentage">0%</p>
+      </div>
+    </div>
+    <br />
+    <div class="container">
+      <p id="upload_msg">No Table is uploaded</p>
+      <div id="table-container"></div>
+    </div>
+  </body>
+</html>
+
+<!--
+
+
+   <style>
+      .excel-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .excel-table th,
+      .excel-table td {
+        padding: 8px;
+        border: 1px solid #f6d3d3;
+      }
+
+      .excel-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+
+      .excel-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      .excel-table tr:hover {
+        background-color: #e2e2e2;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      .input-file {
+        display: none;
+        
+      }
+
+      .file-label {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .file-text {
+        margin-left: 10px;
+      }
+
+      .button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+
+      .progress-bar {
+        background-color: #ddd;
+        height: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar-fill {
+        background-color: #4caf50;
+        height: 100%;
+        border-radius: 5px;
+      }
+
+      .upload-percentage {
+        font-weight: bold;
+      }
+
+      #table-container {
+        margin-top: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+      }
+
+      @media only screen and (max-width: 480px) {
+        .container {
+          padding: 10px;
+        }
+
+        .form-group {
+          margin-bottom: 10px;
+        }
+
+        .button {
+          margin-right: 5px;
+        }
+
+        .file-label,
+        .button {
+          padding: 8px 16px;
+        }
+      }
+      .table-container {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .table-container th,
+      .table-container td {
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        border-bottom: 2px solid #ccc;
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      tbody tr:hover {
+        background-color: #eaeaea;
+      }
+
+      tbody td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      @media screen and (max-width: 600px) {
+        .table-container {
+          border: 0;
+        }
+        thead {
+          display: none;
+        }
+        tbody td {
+          display: block;
+          border: none;
+          position: relative;
+          padding-left: 50%;
+        }
+        td:before {
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          width: 45%;
+        }
+      }
+    </style>
+-->
