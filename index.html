@@ -137,18 +137,37 @@
   <body>
     <div class="container">
       <h1>Upload File to Firebase</h1>
+      <div>
+        <label for="headerIndex">Header Column Index:</label>
+        <input
+          type="number"
+          id="headerIndex"
+          class="header-index"
+          min="0"
+          placeholder="Enter the header column index"
+        />
+      </div>
+      <br />
       <div class="form-group">
         <input
           type="file"
           id="inputFile"
           class="input-file"
+          accept=".xlsx, .xls, .csv"
           onchange="getfile(event)"
         />
         <label for="inputFile" class="file-label">+</label>
         <span class="file-text"></span>
       </div>
       <br />
-      <button type="submit" class="button" onclick="uploadFile()">
+
+      <br />
+      <button
+        type="submit"
+        class="button"
+        id="uploadbutton"
+        onclick="uploadFile()"
+      >
         Upload File
       </button>
       <br />

@@ -23,17 +23,26 @@ let fileName;
 let percentageVal;
 
 function getfile(e) {
+  let headerIndex = parseInt(document.getElementById("headerIndex").value);
+  if (isNaN(headerIndex)) {
+    alert("No header is added it consider first row as head");
+    headerIndex = 1;
+  }
   console.log("getfile");
   fileItem = e.target.files[0];
   fileName = fileItem.name;
-  console.log(fileName);
   getTable();
+  console.log(fileName);
 }
 
 let email_col;
 function getTable() {
   let msg = document.getElementById("upload_msg");
-  msg.innerHTML = "this is uploaded data";
+  msg.style.backgroundColor = "";
+  msg.style.color = "";
+  msg.style.fontSize = "";
+  msg.style.border = "";
+
   let fileInput = document.getElementById("inputFile");
   let file = fileInput.files[0]; // Get the selected file
 
@@ -44,7 +53,8 @@ function getTable() {
       let data = new Uint8Array(e.target.result);
 
       // Convert Excel data to HTML table
-      let table = convertExcelToTable(data, expectedColumns);
+
+      let table = convertExcelToTable(data, expectedColumns, headerIndex);
       if (table == null) {
         console.log("not matched");
       }
@@ -52,6 +62,7 @@ function getTable() {
       let container = document.getElementById("table-container");
       container.innerHTML = ""; // Clear previous data
       container.appendChild(table);
+      msg.innerHTML = "this is uploaded data";
     };
 
     reader.readAsArrayBuffer(file);
@@ -60,81 +71,203 @@ function getTable() {
   }
 }
 
-function convertExcelToTable(data, expectedColumns) {
+function convertExcelToTable(data, expectedColumns, headerRowIndex) {
+  if (isNaN(headerRowIndex)) {
+    headerRowIndex = 1;
+  }
   let workbook = XLSX.read(data, { type: "array" });
   let sheetName = workbook.SheetNames[0];
   let sheet = workbook.Sheets[sheetName];
-  let jsonData = XLSX.utils.sheet_to_json(sheet, { header: 2 });
+  let jsonData = XLSX.utils.sheet_to_json(sheet, {
+    header: headerRowIndex - 1,
+  });
   let table = document.createElement("table");
   table.classList.add("excel-table");
 
   let headerRow = document.createElement("tr");
-  let i = 0;
-  Object.keys(jsonData[0]).forEach(function (key) {
-    i++;
+  let emailColIndex = null; // Variable to store the index of the email column
+
+  let headers = jsonData[headerRowIndex - 1];
+  Object.keys(headers).forEach(function (key, i) {
     let th = document.createElement("th");
     th.textContent = key;
-    if (key == "email" || key == "Email") {
-      email_col = i;
-      console.log(i);
+    if (key.toLowerCase() === "email") {
+      emailColIndex = i + 1; // Store the index of the email column (add 1 since indexes start from 0)
     }
     headerRow.appendChild(th);
   });
   table.appendChild(headerRow);
 
-  // Check if all expected columns are present
-  let missingColumns = expectedColumns.filter(function (column) {
-    return !Object.keys(jsonData[0]).includes(column);
-  });
-
-  if (missingColumns.length > 0) {
-    console.error("Missing columns:", missingColumns);
+  // Validate the presence of the email column
+  if (emailColIndex === null) {
+    let msg = document.getElementById("upload_msg");
+    msg.innerHTML = "Email column is missing.";
+    msg.style.backgroundColor = "red";
+    msg.style.color = "white";
+    msg.style.fontSize = "24px";
+    let uploadBtn = document.getElementById("uploadbutton");
+    uploadBtn.disabled = true;
     return null; // or handle the error as needed
   }
 
-  jsonData.forEach(function (row) {
+  jsonData.forEach(function (row, rowIndex) {
+    if (rowIndex === headerRowIndex) return; // Skip the header row
     let tr = document.createElement("tr");
-    let j = 0;
-    Object.values(row).forEach(function (value) {
-      j++;
-
+    let isEmailValid = true; // Flag to track if email is valid
+    Object.values(row).forEach(function (value, j) {
       let td = document.createElement("td");
       td.textContent = value;
 
-      if (j == email_col) {
-        console.log(value);
+      if (j + 1 === emailColIndex) {
+        if (!validateEmail(value)) {
+          td.style.backgroundColor = "red"; // Change background color if email is not valid
+          isEmailValid = false;
+        }
       }
       tr.appendChild(td);
     });
+
+    if (!isEmailValid) {
+      tr.style.backgroundColor = "lightpink"; // Change row color if email is not valid
+      let uploadBtn = document.getElementById("uploadbutton");
+      uploadBtn.disabled = true;
+    }
+
     table.appendChild(tr);
   });
 
   return table;
 }
 
-// function convertExcelToTable(data) {
+// function convertExcelToTable(data, expectedColumns) {
 //   let workbook = XLSX.read(data, { type: "array" });
 //   let sheetName = workbook.SheetNames[0];
 //   let sheet = workbook.Sheets[sheetName];
-//   let jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+//   let jsonData = XLSX.utils.sheet_to_json(sheet, { header: 2 });
 //   let table = document.createElement("table");
-
-//   // Add CSS class to the table for styling
 //   table.classList.add("excel-table");
 
 //   let headerRow = document.createElement("tr");
+//   let i = 0;
+//   let emailColIndex = null; // Variable to store the index of the email column
 //   Object.keys(jsonData[0]).forEach(function (key) {
+//     i++;
 //     let th = document.createElement("th");
 //     th.textContent = key;
+//     if (key.toLowerCase() === "email") {
+//       emailColIndex = i; // Store the index of the email column
+//     }
 //     headerRow.appendChild(th);
 //   });
 //   table.appendChild(headerRow);
 
+//   // Validate the presence of the email column
+//   if (emailColIndex === null) {
+//     let msg = document.getElementById("upload_msg");
+//     msg.innerHTML = "Email column is missing.";
+//     msg.style.backgroundColor = "red";
+//     msg.style.color = "white";
+//     msg.style.fontSize = "24px";
+//     let uploadBtn = document.getElementById("uploadbutton");
+//     uploadBtn.disabled = true;
+//     return null; // or handle the error as needed
+//   }
+
 //   jsonData.forEach(function (row) {
 //     let tr = document.createElement("tr");
+//     let j = 0;
+//     let isEmailValid = true; // Flag to track if email is valid
 //     Object.values(row).forEach(function (value) {
+//       j++;
+
 //       let td = document.createElement("td");
 //       td.textContent = value;
+
+//       if (j === emailColIndex) {
+//         if (!validateEmail(value)) {
+//           td.style.backgroundColor = "red"; // Change background color if email is not valid
+//           isEmailValid = false;
+//         }
+//       }
+//       tr.appendChild(td);
+//     });
+
+//     if (!isEmailValid) {
+//       tr.style.backgroundColor = "lightpink"; // Change row color if email is not valid
+//       let uploadBtn = document.getElementById("uploadbutton");
+//       uploadBtn.disabled = true;
+//     }
+
+//     table.appendChild(tr);
+//   });
+
+//   return table;
+// }
+
+// Function to validate email format
+function validateEmail(email) {
+  // Regular expression to validate email format
+  let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// function convertExcelToTable(data, expectedColumns) {
+//   let workbook = XLSX.read(data, { type: "array" });
+//   let sheetName = workbook.SheetNames[0];
+//   let sheet = workbook.Sheets[sheetName];
+//   let jsonData = XLSX.utils.sheet_to_json(sheet, { header: 2 });
+//   let table = document.createElement("table");
+//   table.classList.add("excel-table");
+
+//   let headerRow = document.createElement("tr");
+//   let i = 0;
+//   Object.keys(jsonData[0]).forEach(function (key) {
+//     i++;
+//     let th = document.createElement("th");
+//     th.textContent = key;
+//     if (key == "email" || key == "Email") {
+//       email_col = i;
+//       console.log(i);
+//     }
+//     headerRow.appendChild(th);
+//   });
+//   table.appendChild(headerRow);
+
+//   // Check if all expected columns are present
+//   let missingColumns = expectedColumns.filter(function (column) {
+//     let lowerCaseColumn = column.toLowerCase();
+//     return !Object.keys(jsonData[0]).some(function (key) {
+//       return key.toLowerCase() === lowerCaseColumn;
+//     });
+//   });
+
+//   if (missingColumns.length > 0) {
+//     let msg = document.getElementById("upload_msg");
+//     msg.innerHTML = "not correct data";
+//     // alert("wrong data!");
+//     msg.style.backgroundColor = "red";
+//     msg.style.color = "white";
+//     msg.style.fontSize = "24px";
+//     // msg.style.border = "2px solid black";
+//     //  alert("not correct data");
+//     alert("Missing columns");
+//     let uploadBtn = document.getElementById("uploadbutton");
+//     uploadBtn.disabled = true;
+//     return null; // or handle the error as needed
+//   }
+
+//   jsonData.forEach(function (row) {
+//     let tr = document.createElement("tr");
+//     let j = 0;
+//     Object.values(row).forEach(function (value) {
+//       j++;
+
+//       let td = document.createElement("td");
+//       td.textContent = value;
+
+//       if (j == email_col) {
+//         console.log(value);
+//       }
 //       tr.appendChild(td);
 //     });
 //     table.appendChild(tr);
@@ -143,9 +276,14 @@ function convertExcelToTable(data, expectedColumns) {
 //   return table;
 // }
 
-//let progressBar = document.getElementById("uploadProgress");
-
 function uploadFile() {
+  let fileInput = document.getElementById("inputFile");
+  if (fileInput.files.length > 0) {
+    console.log("A file is selected");
+  } else {
+    alert("No file selected");
+    return;
+  }
   let storageref = firebase.storage().ref("files/" + fileName);
   let uploadTask = storageref.put(fileItem);
   let statusDiv = document.getElementById("upload-percentage");
@@ -168,6 +306,7 @@ function uploadFile() {
     },
     function (error) {
       // Handle error
+      alert("This is an alert message!");
       console.error("Upload error:", error);
     },
     function () {
