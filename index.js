@@ -8,6 +8,8 @@ const firebaseConfig = {
   measurementId: "G-9SQ5CBCHHS",
 };
 
+//  line 142 imp
+
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
@@ -33,6 +35,33 @@ function getfile(e) {
   fileName = fileItem.name;
   getTable();
   console.log(fileName);
+}
+
+let templet_file;
+let temp_name;
+
+function gettemp(e) {
+  let imageFile = e.target.files[0];
+
+  // Display the image as a preview
+  let imagePreview = document.getElementById("imagePreview");
+  let imagePreviewContainer = document.getElementById("imagePreviewContainer");
+
+  // Check if the selected file is an image
+  if (imageFile && imageFile.type.startsWith("image/")) {
+    let reader = new FileReader();
+
+    reader.onload = function (e) {
+      imagePreview.src = e.target.result;
+    };
+
+    reader.readAsDataURL(imageFile);
+    imagePreviewContainer.style.display = "block"; // Show the preview container
+  } else {
+    // If the selected file is not an image, hide the preview container
+    imagePreviewContainer.style.display = "none";
+    alert("Please select a valid image file (JPEG, JPG, or PNG).");
+  }
 }
 
 let email_col;
@@ -70,7 +99,7 @@ function getTable() {
     alert("No file selected!");
   }
 }
-
+let check = false;
 function convertExcelToTable(data, expectedColumns, headerRowIndex) {
   if (isNaN(headerRowIndex)) {
     headerRowIndex = 1;
@@ -122,6 +151,7 @@ function convertExcelToTable(data, expectedColumns, headerRowIndex) {
         if (!validateEmail(value)) {
           td.style.backgroundColor = "red"; // Change background color if email is not valid
           isEmailValid = false;
+          check = true;
         }
       }
       tr.appendChild(td);
@@ -130,7 +160,7 @@ function convertExcelToTable(data, expectedColumns, headerRowIndex) {
     if (!isEmailValid) {
       tr.style.backgroundColor = "lightpink"; // Change row color if email is not valid
       let uploadBtn = document.getElementById("uploadbutton");
-      uploadBtn.disabled = true;
+      // uploadBtn.disabled = true;
     }
 
     table.appendChild(tr);
@@ -205,6 +235,7 @@ function convertExcelToTable(data, expectedColumns, headerRowIndex) {
 // }
 
 // Function to validate email format
+
 function validateEmail(email) {
   // Regular expression to validate email format
   let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -277,44 +308,37 @@ function validateEmail(email) {
 // }
 
 function uploadFile() {
-  let fileInput = document.getElementById("inputFile");
-  if (fileInput.files.length > 0) {
-    console.log("A file is selected");
-  } else {
-    alert("No file selected");
+  if (check) {
+    alert("enter correct data!!!");
     return;
   }
-  let storageref = firebase.storage().ref("files/" + fileName);
-  let uploadTask = storageref.put(fileItem);
-  let statusDiv = document.getElementById("upload-percentage");
-  uploadTask.on(
-    "state_changed",
-    (snapshot) => {
-      console.log(snapshot);
-      let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+  let fileInput = document.getElementById("inputFile");
+  let imageInput = document.getElementById("imageInput");
 
-      console.log(progress);
-      // Update progress bar value
-      //progressBar.innerHTML = "" + progress + "%";
+  if (!fileInput.files[0] || !imageInput.files[0]) {
+    alert("Please select Excel and Image files.");
+    return;
+  }
+  let fileName = fileInput.files[0].name;
+  let fileExtension = fileName.split(".").pop();
 
-      // Update status message
-      statusDiv.innerText = "Uploading... " + progress.toFixed(2) + "%";
-      percentageVal = Math.floor(
-        (snapshot.bytesTranferred / snapshot.TotalBytes) * 100
-      );
-      uploadper.innerHTML = percentageVal + "%";
-    },
-    function (error) {
-      // Handle error
-      alert("This is an alert message!");
-      console.error("Upload error:", error);
-    },
-    function () {
-      // Handle successful upload
-      console.log("Upload complete!");
+  // Upload Excel file to Firebase Storage
+  let storageRef = firebase.storage().ref("files/" + "user1/" + fileName);
+  let uploadTask = storageRef.put(fileInput.files[0]);
+
+  // Upload Image file to Firebase Storage
+  let imageName = imageInput.files[0].name;
+  let imageRef = firebase.storage().ref("files/" + "user1/" + imageName);
+  let imageUploadTask = imageRef.put(imageInput.files[0]);
+
+  // You can use Promise.all() to handle all uploads together
+  Promise.all([uploadTask, imageUploadTask])
+    .then((snapshots) => {
+      console.log("All files uploaded successfully!");
       let msg = document.getElementById("upload_msg");
-
-      msg.innerText = "Upload complete!";
-    }
-  );
+      msg.innerText = "All files uploaded successfully!";
+    })
+    .catch((error) => {
+      console.error("Error uploading files:", error);
+    });
 }
