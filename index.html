@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Upload File to Firebase</title>
     <script src="https://www.gstatic.com/firebasejs/6.0.2/firebase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
+
     <script
       type="text/javascript"
       src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"
@@ -136,6 +138,7 @@
   
   </style>
   <body>
+    <button><a href="view_all.html">view all docs</a></button>
     <div class="container">
       <h1>Upload File to Firebase</h1>
       <div>
@@ -194,5 +197,17 @@
     <div id="imagePreviewContainer">
       <img id="imagePreview" src="" alt="Selected Image" />
     </div>
+
+    <button onclick="populateFilesTable()">Populate Files Table</button>
+
+  <!-- Table to display files -->
+  <div id="fileTable"></div>
+
   </body>
+  <script>
+    const uuidv4 = uuid.v4;
+
+    const uniqueId = uuidv4();
+    console.log(uniqueId);
+</script>
 </html>

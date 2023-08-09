@@ -13,6 +13,17 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
+const script = document.createElement("script");
+script.src = "https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js";
+script.onload = function () {
+  // The uuid library is now loaded and can be used
+  const uuidv4 = uuid.v4;
+
+  const myuuid = uuidv4();
+  console.log(myuuid);
+};
+
+myuuid = "user1";
 //expected cols in table
 let expectedColumns = ["name", "id", "email"];
 // their can be more than this but these are compulsory
@@ -307,6 +318,8 @@ function validateEmail(email) {
 //   return table;
 // }
 
+let fileList = [];
+
 function uploadFile() {
   if (check) {
     alert("enter correct data!!!");
@@ -323,13 +336,47 @@ function uploadFile() {
   let fileExtension = fileName.split(".").pop();
 
   // Upload Excel file to Firebase Storage
-  let storageRef = firebase.storage().ref("files/" + "user1/" + fileName);
+  let storageRef = firebase.storage().ref("files/" + myuuid + fileName);
   let uploadTask = storageRef.put(fileInput.files[0]);
+
+  uploadTask
+    .then(() => {
+      storageRef
+        .getDownloadURL()
+        .then((url) => {
+          console.log("Download URL:", url);
+          fileList.push([fileName, url]);
+          // You can now use the 'url' to access the uploaded file
+        })
+        .catch((error) => {
+          console.error("Error getting download URL:", error);
+        });
+    })
+    .catch((error) => {
+      console.error("Upload error:", error);
+    });
 
   // Upload Image file to Firebase Storage
   let imageName = imageInput.files[0].name;
-  let imageRef = firebase.storage().ref("files/" + "user1/" + imageName);
+  let imageRef = firebase.storage().ref("files/" + myuuid + imageName);
   let imageUploadTask = imageRef.put(imageInput.files[0]);
+
+  imageUploadTask
+    .then(() => {
+      imageRef
+        .getDownloadURL()
+        .then((url) => {
+          console.log("Download URL:", url);
+          fileList.push([imageName, url]);
+          // You can now use the 'url' to access the uploaded file
+        })
+        .catch((error) => {
+          console.error("Error getting download URL:", error);
+        });
+    })
+    .catch((error) => {
+      console.error("Upload error:", error);
+    });
 
   // You can use Promise.all() to handle all uploads together
   Promise.all([uploadTask, imageUploadTask])
@@ -341,4 +388,33 @@ function uploadFile() {
     .catch((error) => {
       console.error("Error uploading files:", error);
     });
+}
+
+function populateFilesTable() {
+  // Assuming fileList is an array of file information (name and URL)
+  // Each element of fileList should be [fileName, url]
+
+  // Get the container element
+  const fileTableContainer = document.getElementById("fileTable");
+
+  // Generate the table HTML
+  let tableHTML = "<table><tr><th>File Name</th><th>Download</th></tr>";
+
+  fileList.forEach((fileInfo) => {
+    const fileName = fileInfo[0];
+    const url = fileInfo[1];
+
+    // Add a new row with file name and download button
+    tableHTML += `
+    <tr>
+      <td>${fileName}</td>
+      <td><a href="${url}" download><button>Download</button></a></td>
+    </tr>
+  `;
+  });
+
+  tableHTML += "</table>";
+
+  // Set the generated HTML to the container
+  fileTableContainer.innerHTML = tableHTML;
 }
