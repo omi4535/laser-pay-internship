@@ -1,6 +1,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyDyT_y75Mkz1vm8_BXm284C0VJda31QxOw",
   authDomain: "laser-pay-4b260.firebaseapp.com",
+  databaseURL: "https://laser-pay-4b260-default-rtdb.firebaseio.com",
   projectId: "laser-pay-4b260",
   storageBucket: "laser-pay-4b260.appspot.com",
   messagingSenderId: "1059782615257",
@@ -12,18 +13,19 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-
+const newData = {};
 const script = document.createElement("script");
 script.src = "https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js";
-script.onload = function () {
+let myuuid;
+function createuuid() {
   // The uuid library is now loaded and can be used
   const uuidv4 = uuid.v4;
 
-  const myuuid = uuidv4();
+  myuuid = uuidv4();
   console.log(myuuid);
-};
+}
 
-myuuid = "user1";
+// myuuid = "user11";
 //expected cols in table
 let expectedColumns = ["name", "id", "email"];
 // their can be more than this but these are compulsory
@@ -320,7 +322,10 @@ function validateEmail(email) {
 
 let fileList = [];
 
+let furl = "dfa",
+  iurl = "asdf";
 function uploadFile() {
+  createuuid();
   if (check) {
     alert("enter correct data!!!");
     return;
@@ -336,7 +341,8 @@ function uploadFile() {
   let fileExtension = fileName.split(".").pop();
 
   // Upload Excel file to Firebase Storage
-  let storageRef = firebase.storage().ref("files/" + myuuid + fileName);
+  let fstorage = firebase.storage();
+  let storageRef = fstorage.ref().child("files/" + myuuid + "/" + fileName);
   let uploadTask = storageRef.put(fileInput.files[0]);
 
   uploadTask
@@ -346,6 +352,9 @@ function uploadFile() {
         .then((url) => {
           console.log("Download URL:", url);
           fileList.push([fileName, url]);
+          furl = url;
+          add_to_realtdb("fileurl", url);
+          add_to_realtdb("fileName", fileName);
           // You can now use the 'url' to access the uploaded file
         })
         .catch((error) => {
@@ -355,19 +364,25 @@ function uploadFile() {
     .catch((error) => {
       console.error("Upload error:", error);
     });
+  // firebase.initializeApp(firebaseConfig);
 
   // Upload Image file to Firebase Storage
   let imageName = imageInput.files[0].name;
-  let imageRef = firebase.storage().ref("files/" + myuuid + imageName);
+  let imageRef = firebase
+    .storage()
+    .ref()
+    .child("files/" + myuuid + "/" + imageName);
   let imageUploadTask = imageRef.put(imageInput.files[0]);
-
   imageUploadTask
     .then(() => {
       imageRef
         .getDownloadURL()
         .then((url) => {
           console.log("Download URL:", url);
+          iurl = url;
           fileList.push([imageName, url]);
+          add_to_realtdb("imageurl", url);
+          add_to_realtdb("imageName", fileName);
           // You can now use the 'url' to access the uploaded file
         })
         .catch((error) => {
@@ -388,6 +403,8 @@ function uploadFile() {
     .catch((error) => {
       console.error("Error uploading files:", error);
     });
+
+  // newData[23] = 23342;
 }
 
 function populateFilesTable() {
@@ -417,4 +434,24 @@ function populateFilesTable() {
 
   // Set the generated HTML to the container
   fileTableContainer.innerHTML = tableHTML;
+}
+
+function add_to_realtdb(key, value) {
+  console.log("asdf");
+  console.log(key);
+  console.log(value);
+  const database = firebase.database();
+  const data = {};
+  data[key] = value;
+  const uploadPath = `uploads/ ${myuuid} /`;
+  //`;
+  const dataRef = database.ref().child(uploadPath);
+  dataRef
+    .update(data)
+    .then(() => {
+      console.log("Data uploaded successfully");
+    })
+    .catch((error) => {
+      console.error("Error uploading data:", error);
+    });
 }
