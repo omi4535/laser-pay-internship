@@ -407,34 +407,34 @@ function uploadFile() {
   // newData[23] = 23342;
 }
 
-function populateFilesTable() {
-  // Assuming fileList is an array of file information (name and URL)
-  // Each element of fileList should be [fileName, url]
+// function populateFilesTable() {
+//   // Assuming fileList is an array of file information (name and URL)
+//   // Each element of fileList should be [fileName, url]
 
-  // Get the container element
-  const fileTableContainer = document.getElementById("fileTable");
+//   // Get the container element
+//   const fileTableContainer = document.getElementById("fileTable");
 
-  // Generate the table HTML
-  let tableHTML = "<table><tr><th>File Name</th><th>Download</th></tr>";
+//   // Generate the table HTML
+//   let tableHTML = "<table><tr><th>File Name</th><th>Download</th></tr>";
 
-  fileList.forEach((fileInfo) => {
-    const fileName = fileInfo[0];
-    const url = fileInfo[1];
+//   fileList.forEach((fileInfo) => {
+//     const fileName = fileInfo[0];
+//     const url = fileInfo[1];
 
-    // Add a new row with file name and download button
-    tableHTML += `
-    <tr>
-      <td>${fileName}</td>
-      <td><a href="${url}" download><button>Download</button></a></td>
-    </tr>
-  `;
-  });
+//     // Add a new row with file name and download button
+//     tableHTML += `
+//     <tr>
+//       <td>${fileName}</td>
+//       <td><a href="${url}" download><button>Download</button></a></td>
+//     </tr>
+//   `;
+//   });
 
-  tableHTML += "</table>";
+//   tableHTML += "</table>";
 
-  // Set the generated HTML to the container
-  fileTableContainer.innerHTML = tableHTML;
-}
+//   // Set the generated HTML to the container
+//   fileTableContainer.innerHTML = tableHTML;
+// }
 
 function add_to_realtdb(key, value) {
   console.log("asdf");
@@ -453,5 +453,88 @@ function add_to_realtdb(key, value) {
     })
     .catch((error) => {
       console.error("Error uploading data:", error);
+    });
+}
+
+// Get a reference to the table body
+const tableBody = document.getElementById("table-body");
+
+// Function to display data in the table
+function displayDataInTable(data) {
+  tableBody.innerHTML = ""; // Clear previous data
+
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      const item = data[key];
+      const row = document.createElement("tr");
+      const nameCell = document.createElement("td");
+      const descriptionCell = document.createElement("td");
+
+      nameCell.textContent = item.name;
+      descriptionCell.textContent = item.description;
+
+      row.appendChild(nameCell);
+      row.appendChild(descriptionCell);
+      tableBody.appendChild(row);
+    }
+  }
+}
+
+function populateFilesTable() {
+  // Initialize Firebase
+
+  // Get a reference to the database
+  const dbRef = firebase.database().ref("uploads");
+
+  // Get a reference to the table body
+  const tableBody = document.getElementById("table-body");
+
+  // Function to display data in the table
+  function displayData(data) {
+    tableBody.innerHTML = ""; // Clear previous data
+
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const item = data[key];
+        const row = document.createElement("tr");
+        const fileNameCell = document.createElement("td");
+        const fileUrlCell = document.createElement("td");
+        const imageNameCell = document.createElement("td");
+        const imageUrlCell = document.createElement("td");
+
+        fileNameCell.textContent = item.fileName;
+        fileUrlCell.innerHTML = `<a href="${item.fileurl}" target="_blank">Download File</a>`;
+        imageNameCell.textContent = item.imageName;
+
+        // Make the image clickable to download
+        const imageLink = document.createElement("a");
+        const image = document.createElement("img");
+        imageLink.href = item.imageurl;
+        imageLink.target = "_blank";
+        imageLink.download = item.imageName; // Set the download attribute to the image's name
+        image.src = item.imageurl;
+        image.alt = "Image";
+        image.style.maxWidth = "100px";
+        image.style.maxHeight = "100px";
+        imageLink.appendChild(image);
+        imageUrlCell.appendChild(imageLink);
+        row.appendChild(fileNameCell);
+        row.appendChild(fileUrlCell);
+        row.appendChild(imageNameCell);
+        row.appendChild(imageUrlCell);
+        tableBody.appendChild(row);
+      }
+    }
+  }
+
+  // Retrieve data from the database
+  dbRef
+    .once("value")
+    .then((snapshot) => {
+      const data = snapshot.val();
+      displayData(data);
+    })
+    .catch((error) => {
+      console.error("Error retrieving data:", error);
     });
 }

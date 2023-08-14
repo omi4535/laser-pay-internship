@@ -16,6 +16,32 @@
     <script src="./index.js"></script></head
   ><style>
     /* Body styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 2px solid #ddd;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border: 2px solid #000000; 
+    }
+    th {
+      background-color: #f2f2f2;
+      border: 3px solid #000000; 
+    }
+
+    /* Folder subheading styling */
+    .folder-heading {
+      font-weight: bold;
+      background-color: #e0e0e0;
+    }
+
+    /* Image styling */
+    .image-cell img {
+      max-width: 100px;
+      max-height: 100px;
+    }
     body {
       font-family: Arial, sans-serif;
       background-color: #f5f5f5;
@@ -203,7 +229,19 @@
     <button onclick="populateFilesTable()">Populate Files Table</button>
 
   <!-- Table to display files -->
-  <div id="fileTable"></div>
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      <!-- Table rows will be added here -->
+    </tbody>
+  </table>
 
   </body>
   <script>
